@@ -1,9 +1,10 @@
 package harbor
 
 import (
-	"time"
-	"github.com/parnurzeal/gorequest"
 	"fmt"
+	"time"
+
+	"github.com/parnurzeal/gorequest"
 )
 
 // VulnerabilityItem is an item in the vulnerability result returned by vulnerability details API.
@@ -94,6 +95,12 @@ type TagResp struct {
 	ScanOverview *ImgScanOverview `json:"scan_overview,omitempty"`
 }
 
+type ArrayTagResp []TagResp
+
+func (a ArrayTagResp) Len() int           { return len(a) }
+func (a ArrayTagResp) Less(i, j int) bool { return a[i].Created.After(a[j].Created) }
+func (a ArrayTagResp) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+
 // RepositoriesService handles communication with the user related methods of
 // the Harbor API.
 //
@@ -107,7 +114,6 @@ type ListRepositoriesOption struct {
 	ProjectId int64  `url:"project_id,omitempty" json:"project_id,omitempty"`
 	Q         string `url:"q,omitempty" json:"q,omitempty"`
 }
-
 
 type ManifestResp struct {
 	Manifest interface{} `json:"manifest"`
@@ -211,11 +217,11 @@ func (s *RepositoriesService) GetRepositoryTagManifests(repoName, tag string, ve
 	var v ManifestResp
 	resp, _, errs := s.client.
 		NewRequest(gorequest.GET, func() string {
-		if version == "" {
-			return fmt.Sprintf("repositories/%s/tags/%s/manifest", repoName, tag)
-		}
-		return fmt.Sprintf("repositories/%s/tags/%s/manifest?version=%s", repoName, tag, version)
-	}()).
+			if version == "" {
+				return fmt.Sprintf("repositories/%s/tags/%s/manifest", repoName, tag)
+			}
+			return fmt.Sprintf("repositories/%s/tags/%s/manifest?version=%s", repoName, tag, version)
+		}()).
 		EndStruct(&v)
 	return v, &resp, errs
 }
@@ -272,11 +278,11 @@ func (s *RepositoriesService) GetRepositoryTop(top interface{}) ([]RepoResp, *go
 	var v []RepoResp
 	resp, _, errs := s.client.
 		NewRequest(gorequest.GET, func() string {
-		if t, ok := top.(int); ok {
-			return fmt.Sprintf("repositories/top?count=%d", t)
-		}
-		return fmt.Sprintf("repositories/top")
-	}()).
+			if t, ok := top.(int); ok {
+				return fmt.Sprintf("repositories/top?count=%d", t)
+			}
+			return fmt.Sprintf("repositories/top")
+		}()).
 		EndStruct(&v)
 	return v, &resp, errs
 }
